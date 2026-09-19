@@ -6,19 +6,19 @@ export default function AboutPage({ setActivePage }) {
     {
       name: "Arthur Vance",
       role: "Founder & Managing Director",
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80",
+      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&crop=faces,top&w=800&q=80",
       bio: "Over 22 years of automotive leadership, passionate about curating the finest performance vehicles."
     },
     {
       name: "Victoria Hayes",
       role: "Head of Client Relations",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&crop=faces,top&w=800&q=80",
       bio: "Ensures every client enjoys an effortless VIP experience from initial inquiry to vehicle handover."
     },
     {
       name: "David Sterling",
       role: "Chief Technical Inspector",
-      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
+      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&crop=faces,top&w=800&q=80",
       bio: "Master Master Tech with 15+ years certifying luxury European and domestic performance drivetrains."
     }
   ];
@@ -144,12 +144,12 @@ export default function AboutPage({ setActivePage }) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {teamMembers.map((member, i) => (
-            <div key={i} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm group">
-              <div className="h-64 overflow-hidden bg-slate-900">
+            <div key={i} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm group hover:shadow-md transition-all">
+              <div className="h-72 sm:h-80 overflow-hidden bg-slate-900 relative">
                 <img 
                   src={member.image} 
                   alt={member.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="p-6 space-y-2">

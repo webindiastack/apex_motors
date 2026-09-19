@@ -83,11 +83,13 @@ export default function VehicleDetailsPage({ vehicle, vehicles, onBack, onInquir
         </div>
       </div>
 
-      {/* Main Details Grid: Mobile flex order (Gallery -> Inquire Card -> Specs -> Description -> Features) / Desktop 2-Column Grid */}
-      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 items-start">
+      {/* Main Details Grid: Left Column (Gallery + Specs + Description + Features) / Right Column (Inquire & Price Card) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* 1. GALLERY CONTAINER (Order 1 on mobile, Left col on desktop) */}
-        <div className="w-full lg:col-span-7 order-1 lg:order-1 space-y-6">
+        {/* LEFT COLUMN (7 Cols on desktop): Gallery, Key Specs, Description & Features */}
+        <div className="lg:col-span-7 space-y-6">
+          
+          {/* GALLERY CONTAINER */}
           <div className="bg-slate-950 rounded-3xl overflow-hidden shadow-lg relative border border-slate-800">
             <div className="relative h-[320px] sm:h-[440px] w-full bg-slate-900">
               <img
@@ -131,105 +133,7 @@ export default function VehicleDetailsPage({ vehicle, vehicles, onBack, onInquir
               </div>
             )}
           </div>
-        </div>
 
-        {/* 2. INQUIRE & PRICE CARD (Order 2 on mobile, Right col on desktop) */}
-        <div className="w-full lg:col-span-5 order-2 lg:order-2 space-y-6 lg:sticky lg:top-24">
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-md space-y-6">
-            
-            {/* Title & Price Header */}
-            <div className="border-b border-slate-100 pb-5 space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
-                <span>{vehicle.make}</span>
-                <span>Stock #: {vehicle.stockNumber}</span>
-              </div>
-              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-slate-900 tracking-tight leading-snug">
-                {vehicle.year} {vehicle.make} {vehicle.model}
-              </h1>
-              
-              <div className="pt-2 flex items-baseline justify-between">
-                <div>
-                  <span className="text-xs font-semibold text-slate-400 block">Listed Showroom Price</span>
-                  <span className="font-heading font-black text-3xl sm:text-4xl text-brand-600">
-                    ${vehicle.price.toLocaleString()}
-                  </span>
-                </div>
-                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
-                  Est. ${(Math.round(vehicle.price / 60)).toLocaleString()}/mo
-                </span>
-              </div>
-            </div>
-
-            {/* Quick Specs Summary Strip */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <Calendar className="w-4 h-4 text-brand-600" />
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Year</span>
-                  <span className="font-bold text-slate-900">{vehicle.year}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <Gauge className="w-4 h-4 text-brand-600" />
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Mileage</span>
-                  <span className="font-bold text-slate-900">{vehicle.mileage.toLocaleString()} mi</span>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <Fuel className="w-4 h-4 text-brand-600" />
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Fuel Type</span>
-                  <span className="font-bold text-slate-900">{vehicle.fuelType}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <Sliders className="w-4 h-4 text-brand-600" />
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Transmission</span>
-                  <span className="font-bold text-slate-900">{vehicle.transmission}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Inquire CTA Button */}
-            <div className="pt-2">
-              <button
-                onClick={() => onInquire(vehicle)}
-                className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-4 rounded-2xl transition-all shadow-glow-blue flex items-center justify-center space-x-2 text-sm sm:text-base"
-              >
-                <span>Inquire Now</span>
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Dealership Info Card */}
-            <div className="pt-4 border-t border-slate-100 space-y-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Vehicle Location</span>
-              
-              <div className="flex items-start space-x-3 text-xs">
-                <MapPin className="w-4 h-4 text-brand-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <span className="font-bold text-slate-900 block">{vehicle.location}</span>
-                  <span className="text-slate-500">100 Apex Blvd, Automotive Row</span>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3 text-xs pt-1">
-                <Phone className="w-4 h-4 text-brand-600 flex-shrink-0" />
-                <span className="font-semibold text-slate-700">Call Sales: (800) 555-APEX</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* 3. KEY SPECS, DESCRIPTION & FEATURES (Order 3 on mobile, Left col on desktop below gallery) */}
-        <div className="w-full lg:col-span-7 order-3 lg:order-1 space-y-6">
-          
           {/* Key Specs Overview Matrix */}
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <h3 className="font-heading font-bold text-lg text-slate-900 flex items-center space-x-2">
@@ -338,6 +242,100 @@ export default function VehicleDetailsPage({ vehicle, vehicles, onBack, onInquir
             </div>
           )}
 
+        </div>
+
+        {/* RIGHT COLUMN (5 Cols on desktop, Sticky): Inquire & Price Card */}
+        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-md space-y-6">
+            
+            {/* Title & Price Header */}
+            <div className="border-b border-slate-100 pb-5 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <span>{vehicle.make}</span>
+                <span>Stock #: {vehicle.stockNumber}</span>
+              </div>
+              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-slate-900 tracking-tight leading-snug">
+                {vehicle.year} {vehicle.make} {vehicle.model}
+              </h1>
+              
+              <div className="pt-2 flex items-baseline justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-400 block">Listed Showroom Price</span>
+                  <span className="font-heading font-black text-3xl sm:text-4xl text-brand-600">
+                    ${vehicle.price.toLocaleString()}
+                  </span>
+                </div>
+                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+                  Est. ${(Math.round(vehicle.price / 60)).toLocaleString()}/mo
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Specs Summary Strip */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <Calendar className="w-4 h-4 text-brand-600" />
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Year</span>
+                  <span className="font-bold text-slate-900">{vehicle.year}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <Gauge className="w-4 h-4 text-brand-600" />
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Mileage</span>
+                  <span className="font-bold text-slate-900">{vehicle.mileage.toLocaleString()} mi</span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <Fuel className="w-4 h-4 text-brand-600" />
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Fuel Type</span>
+                  <span className="font-bold text-slate-900">{vehicle.fuelType}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <Sliders className="w-4 h-4 text-brand-600" />
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Transmission</span>
+                  <span className="font-bold text-slate-900">{vehicle.transmission}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Inquire CTA Button */}
+            <div className="pt-2">
+              <button
+                onClick={() => onInquire(vehicle)}
+                className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-4 rounded-2xl transition-all shadow-glow-blue flex items-center justify-center space-x-2 text-sm sm:text-base"
+              >
+                <span>Inquire Now</span>
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Dealership Info Card */}
+            <div className="pt-4 border-t border-slate-100 space-y-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Vehicle Location</span>
+              
+              <div className="flex items-start space-x-3 text-xs">
+                <MapPin className="w-4 h-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="font-bold text-slate-900 block">{vehicle.location}</span>
+                  <span className="text-slate-500">100 Apex Blvd, Automotive Row</span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 text-xs pt-1">
+                <Phone className="w-4 h-4 text-brand-600 flex-shrink-0" />
+                <span className="font-semibold text-slate-700">Call Sales: (800) 555-APEX</span>
+              </div>
+            </div>
+
+          </div>
         </div>
 
       </div>

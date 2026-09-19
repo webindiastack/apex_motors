@@ -18,8 +18,8 @@ export default function AdminPage({
 }) {
   const { addToast } = useToast();
 
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Default logged-in for demo convenience
+  // Authentication State (Default false so passcode challenge appears before accessing admin panel)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState('');
 
@@ -177,38 +177,48 @@ export default function AdminPage({
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center p-4 bg-slate-950/90">
-        <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md w-full text-white space-y-6 shadow-2xl">
+      <div className="min-h-[75vh] flex items-center justify-center p-4">
+        <div className="bg-slate-900 border border-slate-800 p-8 sm:p-10 rounded-3xl max-w-md w-full text-white space-y-6 shadow-2xl animate-fade-in">
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center text-white mx-auto shadow-glow-blue">
-              <Lock className="w-7 h-7" />
+            <div className="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center text-white mx-auto shadow-glow-blue mb-3">
+              <Lock className="w-8 h-8" />
             </div>
-            <h2 className="font-heading font-extrabold text-2xl text-white">Dealership Portal</h2>
-            <p className="text-xs text-slate-400">Enter your passcode to access inventory management</p>
+            <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-white">Dealership Portal</h2>
+            <p className="text-xs sm:text-sm text-slate-400">Enter passcode to access Apex Motors admin panel</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                Passcode
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                Admin Passcode
               </label>
               <input
                 type="password"
                 value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                placeholder="Enter 'admin' or 'apex2026'"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500"
+                onChange={(e) => {
+                  setPasscode(e.target.value);
+                  if (authError) setAuthError('');
+                }}
+                placeholder="Enter passcode (e.g. admin)"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+                autoFocus
               />
-              {authError && <p className="text-xs text-rose-500 mt-1">{authError}</p>}
+              {authError && <p className="text-xs text-rose-400 mt-2 font-medium">{authError}</p>}
             </div>
 
             <button
               type="submit"
-              className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-md text-sm"
+              className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-md text-sm cursor-pointer"
             >
               Authenticate Access
             </button>
           </form>
+
+          <div className="pt-2 text-center border-t border-slate-800/80">
+            <span className="text-[11px] text-slate-500">
+              Default passcode: <code className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[11px] font-mono">admin</code> or <code className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[11px] font-mono">apex2026</code>
+            </span>
+          </div>
         </div>
       </div>
     );
