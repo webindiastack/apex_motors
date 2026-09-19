@@ -312,27 +312,29 @@ export default function HomePage({ vehicles, onViewDetails, onInquire, setActive
 
       {/* STATISTICS SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-brand-600 via-blue-600 to-indigo-700 rounded-3xl p-8 sm:p-12 text-white shadow-xl">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center divide-y sm:divide-y-0 sm:divide-x divide-white/20">
-            <div className="space-y-1">
-              <div className="font-heading font-black text-4xl sm:text-5xl text-white">150+</div>
-              <div className="text-xs sm:text-sm font-semibold text-blue-100 uppercase tracking-wider">Vehicles Available</div>
+        <div className="bg-gradient-to-r from-brand-600 via-blue-600 to-indigo-700 rounded-3xl p-5 sm:p-8 lg:p-10 text-white shadow-xl">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 text-center">
+            
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center space-y-1 hover:bg-white/20 transition-all duration-300">
+              <div className="font-heading font-black text-2xl sm:text-4xl lg:text-5xl text-white tracking-tight">150+</div>
+              <div className="text-[10px] sm:text-xs font-bold text-blue-100 uppercase tracking-wider">Vehicles Available</div>
             </div>
 
-            <div className="space-y-1 pt-6 sm:pt-0">
-              <div className="font-heading font-black text-4xl sm:text-5xl text-white">2,400+</div>
-              <div className="text-xs sm:text-sm font-semibold text-blue-100 uppercase tracking-wider">Vehicles Sold</div>
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center space-y-1 hover:bg-white/20 transition-all duration-300">
+              <div className="font-heading font-black text-2xl sm:text-4xl lg:text-5xl text-white tracking-tight">2,400+</div>
+              <div className="text-[10px] sm:text-xs font-bold text-blue-100 uppercase tracking-wider">Vehicles Sold</div>
             </div>
 
-            <div className="space-y-1 pt-6 lg:pt-0">
-              <div className="font-heading font-black text-4xl sm:text-5xl text-white">99.4%</div>
-              <div className="text-xs sm:text-sm font-semibold text-blue-100 uppercase tracking-wider">Happy Customers</div>
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center space-y-1 hover:bg-white/20 transition-all duration-300">
+              <div className="font-heading font-black text-2xl sm:text-4xl lg:text-5xl text-white tracking-tight">99.4%</div>
+              <div className="text-[10px] sm:text-xs font-bold text-blue-100 uppercase tracking-wider">Happy Customers</div>
             </div>
 
-            <div className="space-y-1 pt-6 lg:pt-0">
-              <div className="font-heading font-black text-4xl sm:text-5xl text-white">18 Yrs</div>
-              <div className="text-xs sm:text-sm font-semibold text-blue-100 uppercase tracking-wider">Showroom Legacy</div>
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center space-y-1 hover:bg-white/20 transition-all duration-300">
+              <div className="font-heading font-black text-2xl sm:text-4xl lg:text-5xl text-white tracking-tight">18 Yrs</div>
+              <div className="text-[10px] sm:text-xs font-bold text-blue-100 uppercase tracking-wider">Showroom Legacy</div>
             </div>
+
           </div>
         </div>
       </section>
