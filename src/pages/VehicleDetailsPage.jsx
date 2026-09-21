@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Heart, Share2, Calendar, Gauge, Fuel, Sliders, ShieldCheck, Check, MapPin, Phone, Mail, Clock, ChevronRight, Award, Zap, Sparkles, Maximize2, X } from 'lucide-react';
+import { ArrowLeft, Heart, Share2, Calendar, Gauge, Fuel, Sliders, ShieldCheck, Check, MapPin, Phone, Mail, Clock, ChevronLeft, ChevronRight, Award, Zap, Sparkles, Maximize2, X } from 'lucide-react';
 import { useFavorites } from '../context/FavoritesContext';
 import { useToast } from '../context/ToastContext';
 import VehicleCard from '../components/VehicleCard';
@@ -10,6 +10,8 @@ export default function VehicleDetailsPage({ vehicle, vehicles, onBack, onInquir
   
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchEndX, setTouchEndX] = useState(null);
 
   // Lock body scroll when fullscreen image lightbox is open
   useEffect(() => {
@@ -22,6 +24,61 @@ export default function VehicleDetailsPage({ vehicle, vehicles, onBack, onInquir
       document.body.style.overflow = '';
     };
   }, [isLightboxOpen]);
+
+  // Handle keyboard arrow key navigation for Fullscreen Lightbox
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : (vehicle?.images?.length || 1) - 1));
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setSelectedImageIndex((prev) => (prev < (vehicle?.images?.length || 1) - 1 ? prev + 1 : 0));
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsLightboxOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen, vehicle?.images?.length]);
+
+  const handlePrevImage = (e) => {
+    if (e) e.stopPropagation();
+    if (!vehicle?.images?.length) return;
+    setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : vehicle.images.length - 1));
+  };
+
+  const handleNextImage = (e) => {
+    if (e) e.stopPropagation();
+    if (!vehicle?.images?.length) return;
+    setSelectedImageIndex((prev) => (prev < vehicle.images.length - 1 ? prev + 1 : 0));
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > 40;
+    const isRightSwipe = distance < -40;
+    if (isLeftSwipe) {
+      handleNextImage();
+    } else if (isRightSwipe) {
+      handlePrevImage();
+    }
+    setTouchStartX(null);
+    setTouchEndX(null);
+  };
 
   if (!vehicle) return null;
 
@@ -386,23 +443,118 @@ export default function VehicleDetailsPage({ vehicle, vehicles, onBack, onInquir
         </div>
       </div>
 
-      {/* LIGHTBOX MODAL WITH BODY SCROLL LOCK */}
+      {/* LIGHTBOX MODAL WITH FULL WINDOW SCROLL & LEFT/RIGHT SHIFT NAV */}
       {isLightboxOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col justify-between select-none animate-fade-in"
           onClick={() => setIsLightboxOpen(false)}
         >
-          <button
-            onClick={() => setIsLightboxOpen(false)}
-            className="absolute top-6 right-6 p-3 text-white bg-slate-900 hover:bg-slate-800 rounded-full transition-colors"
+          {/* Top Bar Header */}
+          <div 
+            className="w-full p-4 sm:p-5 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/60 z-10"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X className="w-6 h-6" />
-          </button>
-          <img
-            src={vehicle.images[selectedImageIndex] || vehicle.images[0]}
-            alt="Fullscreen view"
-            className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl"
-          />
+            {/* Left: Vehicle Badge & Model */}
+            <div className="flex items-center space-x-3 min-w-0">
+              <span className="text-xs font-bold uppercase tracking-wider bg-brand-600 text-white px-3 py-1 rounded-full shadow-md flex-shrink-0">
+                {vehicle.year} {vehicle.make}
+              </span>
+              <h2 className="font-heading font-bold text-white text-sm sm:text-base hidden sm:block truncate">
+                {vehicle.model}
+              </h2>
+            </div>
+
+            {/* Right: Close Button */}
+            <button
+              onClick={() => setIsLightboxOpen(false)}
+              className="p-2.5 text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/90 border border-slate-700/50 rounded-full transition-all shadow-md focus:outline-none"
+              title="Close Fullscreen View (Esc)"
+              aria-label="Close full window gallery"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Main Display Area with Left & Right Nav Buttons */}
+          <div 
+            className="relative flex-1 flex items-center justify-center p-4 sm:p-8 overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Floating Centered Counter Badge (Positioned down below header) */}
+            <div className="absolute top-4 sm:top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+              <div className="text-xs font-mono font-bold text-slate-200 bg-slate-900/90 px-4 py-1.5 rounded-full border border-slate-700/70 backdrop-blur-md shadow-lg">
+                {selectedImageIndex + 1} / {vehicle.images.length}
+              </div>
+            </div>
+            {/* Left Shift Button */}
+            {vehicle.images.length > 1 && (
+              <button
+                onClick={handlePrevImage}
+                className="absolute left-4 sm:left-8 z-20 p-3.5 sm:p-4 rounded-2xl bg-slate-900/80 hover:bg-brand-600 text-white border border-slate-700/60 shadow-2xl backdrop-blur-md transition-all duration-200 transform hover:scale-110 active:scale-95 focus:outline-none"
+                title="Previous Image (Left Arrow)"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7" />
+              </button>
+            )}
+
+            {/* Active Image */}
+            <div 
+              className="relative max-w-full max-h-[75vh] flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={vehicle.images[selectedImageIndex] || vehicle.images[0]}
+                alt={`${vehicle.make} ${vehicle.model} - view ${selectedImageIndex + 1}`}
+                className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl select-none transition-all duration-300 border border-slate-800/80"
+              />
+            </div>
+
+            {/* Right Shift Button */}
+            {vehicle.images.length > 1 && (
+              <button
+                onClick={handleNextImage}
+                className="absolute right-4 sm:right-8 z-20 p-3.5 sm:p-4 rounded-2xl bg-slate-900/80 hover:bg-brand-600 text-white border border-slate-700/60 shadow-2xl backdrop-blur-md transition-all duration-200 transform hover:scale-110 active:scale-95 focus:outline-none"
+                title="Next Image (Right Arrow)"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Thumbnail Strip - Horizontal Scroll to Shift Pics */}
+          {vehicle.images.length > 1 && (
+            <div 
+              className="w-full p-4 border-t border-slate-800/80 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center space-x-3 overflow-x-auto max-w-4xl py-1 px-2 no-scrollbar scroll-smooth">
+                {vehicle.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`relative w-20 sm:w-24 h-14 sm:h-16 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all duration-200 focus:outline-none ${
+                      selectedImageIndex === idx
+                        ? 'border-brand-500 scale-105 opacity-100 shadow-glow-blue'
+                        : 'border-slate-700/60 opacity-50 hover:opacity-100 hover:border-slate-400'
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute bottom-1 right-1 bg-slate-950/80 text-[10px] font-mono text-white px-1.5 py-0.5 rounded">
+                      {idx + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

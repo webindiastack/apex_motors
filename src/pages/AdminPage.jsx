@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Car, Plus, Edit, Trash2, ShieldCheck, DollarSign, Users, Mail, Phone, Calendar, 
-  Clock, Search, CheckCircle2, AlertCircle, Eye, LogOut, Lock, RefreshCw, X, Sliders, Filter
+  Clock, Search, CheckCircle2, AlertCircle, Eye, LogOut, Lock, RefreshCw, X, Sliders, Filter,
+  UploadCloud, Link, Star
 } from 'lucide-react';
 import { MAKES, BODY_TYPES, FUEL_TYPES, TRANSMISSIONS } from '../data/vehicles';
 import { useToast } from '../context/ToastContext';
@@ -47,10 +48,7 @@ export default function AdminPage({
     badge: 'Featured',
     vin: 'WBA' + Math.floor(100000000 + Math.random() * 900000000),
     stockNumber: 'APX-' + Math.floor(1000 + Math.random() * 9000),
-    images: [
-      'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1200&q=80'
-    ],
+    images: [],
     description: 'Immaculate vehicle in pristine condition with complete service records and full warranty.',
     keySpecs: {
       acceleration: '0-60 mph in 5.5s',
@@ -70,6 +68,65 @@ export default function AdminPage({
   // Filters inside Admin
   const [inventorySearch, setInventorySearch] = useState('');
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState('All');
+  const [imageUrlInput, setImageUrlInput] = useState('');
+
+  // Handle Photo File Upload
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    files.forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        addToast(`${file.name} is not a valid image file.`, 'error');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        addToast(`${file.name} is larger than 5MB. Please upload smaller images.`, 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64Url = event.target.result;
+        setVehicleFormData(prev => ({
+          ...prev,
+          images: Array.isArray(prev.images) && prev.images.length > 0 ? [...prev.images, base64Url] : [base64Url]
+        }));
+        addToast('Photo uploaded successfully!', 'success');
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  // Add Image via URL
+  const handleAddImageUrl = (e) => {
+    e.preventDefault();
+    if (!imageUrlInput.trim()) return;
+    setVehicleFormData(prev => ({
+      ...prev,
+      images: [...(prev.images || []), imageUrlInput.trim()]
+    }));
+    setImageUrlInput('');
+    addToast('Photo URL added!', 'success');
+  };
+
+  // Remove photo at index
+  const handleRemoveImage = (indexToRemove) => {
+    setVehicleFormData(prev => {
+      const updated = (prev.images || []).filter((_, idx) => idx !== indexToRemove);
+      return { ...prev, images: updated };
+    });
+  };
+
+  // Set image as primary (move to index 0)
+  const handleMakePrimaryImage = (index) => {
+    setVehicleFormData(prev => {
+      const copy = [...(prev.images || [])];
+      const [selected] = copy.splice(index, 1);
+      return { ...prev, images: [selected, ...copy] };
+    });
+  };
 
   // Handle Login
   const handleLogin = (e) => {
@@ -86,6 +143,7 @@ export default function AdminPage({
   // Open Add Modal
   const handleOpenAddModal = () => {
     setEditingVehicle(null);
+    setImageUrlInput('');
     setVehicleFormData({
       make: 'BMW',
       model: '',
@@ -104,9 +162,7 @@ export default function AdminPage({
       badge: 'Featured',
       vin: 'WBA' + Math.floor(100000000 + Math.random() * 900000000),
       stockNumber: 'APX-' + Math.floor(1000 + Math.random() * 9000),
-      images: [
-        'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80'
-      ],
+      images: [],
       description: 'Pristine luxury vehicle with complete inspection certification.',
       keySpecs: {
         acceleration: '0-60 mph in 5.5s',
@@ -128,6 +184,7 @@ export default function AdminPage({
   // Open Edit Modal
   const handleOpenEditModal = (vehicle) => {
     setEditingVehicle(vehicle);
+    setImageUrlInput('');
     setVehicleFormData({ ...vehicle });
     setIsVehicleModalOpen(true);
   };
@@ -657,7 +714,7 @@ export default function AdminPage({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Badge Tag</label>
                   <select
@@ -671,19 +728,113 @@ export default function AdminPage({
                     <option value="Hot Deal">Hot Deal</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Main Image URL</label>
-                  <input
-                    type="url"
-                    value={vehicleFormData.images[0] || ''}
-                    onChange={(e) => {
-                      const newImgs = [...vehicleFormData.images];
-                      newImgs[0] = e.target.value;
-                      setVehicleFormData({ ...vehicleFormData, images: newImgs });
-                    }}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900"
-                  />
+              </div>
+
+              {/* VEHICLE PHOTOS UPLOAD & MANAGER */}
+              <div className="space-y-3 pt-3 border-t border-slate-200">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Vehicle Photos ({vehicleFormData.images?.length || 0})
+                  </label>
+                  <span className="text-[11px] text-slate-500 font-medium">First image is the main display photo</span>
                 </div>
+
+                {/* Upload & Link Input Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  
+                  {/* File Upload Box */}
+                  <div className="relative border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-2xl p-4 text-center bg-slate-50 hover:bg-brand-50/30 transition-all group flex flex-col items-center justify-center cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                      <UploadCloud className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-800 group-hover:text-brand-600">
+                      Upload Photos from Device
+                    </span>
+                    <span className="text-[10px] text-slate-500 mt-0.5">
+                      Drag & drop or click to choose photos (Max 5MB)
+                    </span>
+                  </div>
+
+                  {/* Add URL Input Box */}
+                  <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50 flex flex-col justify-between space-y-2">
+                    <span className="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
+                      <Link className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Or Add Image URL Link</span>
+                    </span>
+                    <div className="flex space-x-2">
+                      <input
+                        type="url"
+                        value={imageUrlInput}
+                        onChange={(e) => setImageUrlInput(e.target.value)}
+                        placeholder="https://example.com/car.jpg"
+                        className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddImageUrl}
+                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-2 rounded-xl transition-colors flex items-center space-x-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add</span>
+                      </button>
+                    </div>
+                    <span className="text-[10px] text-slate-400">Paste direct image web URL</span>
+                  </div>
+
+                </div>
+
+                {/* Thumbnails Gallery Preview */}
+                {vehicleFormData.images && vehicleFormData.images.length > 0 ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 pt-2">
+                    {vehicleFormData.images.map((imgUrl, index) => (
+                      <div key={index} className="relative group rounded-xl overflow-hidden border border-slate-200 aspect-[4/3] bg-slate-900 shadow-sm">
+                        <img
+                          src={imgUrl}
+                          alt={`Vehicle photo ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Primary Badge */}
+                        {index === 0 && (
+                          <span className="absolute top-1 left-1 bg-brand-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow">
+                            Main Photo
+                          </span>
+                        )}
+                        {/* Hover Overlay Controls */}
+                        <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                          {index !== 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMakePrimaryImage(index)}
+                              className="p-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                              title="Set as Main Photo"
+                            >
+                              <Star className="w-3.5 h-3.5 fill-current" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index)}
+                            className="p-1.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors"
+                            title="Remove Photo"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-600 font-medium bg-amber-50 border border-amber-200 p-2.5 rounded-xl">
+                    No photos added yet. Upload at least 1 photo for best display.
+                  </p>
+                )}
               </div>
 
               <div>

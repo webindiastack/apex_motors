@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, Calendar, Gauge, Fuel, Sliders, ArrowRight } from 'lucide-react';
 import { useFavorites } from '../context/FavoritesContext';
 import { useToast } from '../context/ToastContext';
@@ -7,7 +7,27 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { addToast } = useToast();
 
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
   const fav = isFavorite(vehicle.id);
+
+  // Automatically cycle through next images on card hover
+  useEffect(() => {
+    if (!isHovered || !vehicle?.images || vehicle.images.length <= 1) {
+      setCurrentImgIndex(0);
+      return;
+    }
+
+    // Instantly show next image on hover start
+    setCurrentImgIndex(1 % vehicle.images.length);
+
+    const interval = setInterval(() => {
+      setCurrentImgIndex((prev) => (prev + 1) % vehicle.images.length);
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, [isHovered, vehicle?.images]);
 
   const handleFavoriteClick = (e) => {
     e.stopPropagation();
@@ -37,14 +57,16 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire }) {
   return (
     <div 
       onClick={() => onViewDetails(vehicle)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="group bg-white rounded-2xl overflow-hidden border border-slate-200/80 hover:border-brand-500/40 shadow-sm hover:shadow-card-hover transition-all duration-300 flex flex-col h-full cursor-pointer transform hover:-translate-y-1"
     >
-      {/* Image Container with Zoom */}
+      {/* Image Container with Zoom & Hover Image Rotation */}
       <div className="relative h-56 w-full overflow-hidden bg-slate-900">
         <img 
-          src={vehicle.images[0]} 
+          src={vehicle.images[currentImgIndex] || vehicle.images[0]} 
           alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ease-out"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/30 opacity-70 group-hover:opacity-60 transition-opacity" />
@@ -68,6 +90,22 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire }) {
         >
           <Heart className={`w-4 h-4 ${fav ? 'fill-current' : ''}`} />
         </button>
+
+        {/* Multi-Image Indicator Dots */}
+        {vehicle.images && vehicle.images.length > 1 && (
+          <div className="absolute bottom-3 right-3 flex items-center space-x-1 z-10 bg-slate-950/60 backdrop-blur-md px-2 py-1 rounded-full border border-slate-700/50">
+            {vehicle.images.map((_, idx) => (
+              <span
+                key={idx}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  currentImgIndex === idx 
+                    ? 'w-4 bg-brand-500' 
+                    : 'w-1.5 bg-slate-400/60'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Quick Location Pill */}
         <div className="absolute bottom-3 left-3.5 text-xs text-slate-200 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-md font-medium border border-slate-700/50">
