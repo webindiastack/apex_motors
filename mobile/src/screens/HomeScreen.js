@@ -267,14 +267,16 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
           </TouchableOpacity>
         </View>
 
-        {featuredVehicles.map(vehicle => (
-          <VehicleCard
-            key={vehicle.id}
-            vehicle={vehicle}
-            onViewDetails={onViewDetails}
-            onInquire={onInquire}
-          />
-        ))}
+        <View style={styles.gridRow}>
+          {featuredVehicles.map(vehicle => (
+            <VehicleCard
+              key={vehicle.id}
+              vehicle={vehicle}
+              onViewDetails={onViewDetails}
+              onInquire={onInquire}
+            />
+          ))}
+        </View>
       </View>
 
       {/* Why Apex Motors Banner - Ultra Premium Dark Cockpit Style */}
@@ -332,14 +334,16 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
             </View>
           </View>
 
-          {newArrivals.map(vehicle => (
-            <VehicleCard
-              key={vehicle.id}
-              vehicle={vehicle}
-              onViewDetails={onViewDetails}
-              onInquire={onInquire}
-            />
-          ))}
+          <View style={styles.gridRow}>
+            {newArrivals.map(vehicle => (
+              <VehicleCard
+                key={vehicle.id}
+                vehicle={vehicle}
+                onViewDetails={onViewDetails}
+                onInquire={onInquire}
+              />
+            ))}
+          </View>
         </View>
       )}
 
@@ -581,8 +585,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   section: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginTop: 14,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 10,
   },
   sectionHeaderRow: {
     flexDirection: 'row',

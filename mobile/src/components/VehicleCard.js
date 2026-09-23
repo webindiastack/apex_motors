@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity } from 'react-native';
-import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFavorites } from '../context/FavoritesContext';
 
-export default function VehicleCard({ vehicle, onViewDetails, onInquire }) {
+export default function VehicleCard({ vehicle, onViewDetails, onInquire, style }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorite = isFavorite(vehicle.id);
 
@@ -28,7 +28,11 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire }) {
     : 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80';
 
   return (
-    <View style={styles.cardContainer}>
+    <TouchableOpacity
+      style={[styles.cardContainer, style]}
+      onPress={() => onViewDetails(vehicle)}
+      activeOpacity={0.92}
+    >
       {/* Vehicle Image Header */}
       <View style={styles.imageContainer}>
         <Image
@@ -37,7 +41,7 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire }) {
           resizeMode="cover"
         />
 
-        {/* Gradient Shadow Overlay */}
+        {/* Gradient Overlay */}
         <View style={styles.imageOverlay} />
 
         {/* Status Badge */}
@@ -50,19 +54,22 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire }) {
         {/* Favorite Heart Button */}
         <TouchableOpacity
           style={[styles.favoriteButton, favorite && styles.favoriteButtonActive]}
-          onPress={() => toggleFavorite(vehicle.id)}
+          onPress={(e) => {
+            if (e && e.stopPropagation) e.stopPropagation();
+            toggleFavorite(vehicle.id);
+          }}
           activeOpacity={0.8}
         >
           <Ionicons
             name={favorite ? "heart" : "heart-outline"}
-            size={18}
+            size={14}
             color="#FFFFFF"
           />
         </TouchableOpacity>
 
         {/* Location Pill */}
         <View style={styles.locationPill}>
-          <Ionicons name="location-sharp" size={11} color="#60A5FA" style={{ marginRight: 4 }} />
+          <Ionicons name="location-sharp" size={9.5} color="#60A5FA" style={{ marginRight: 3 }} />
           <Text style={styles.locationPillText} numberOfLines={1}>{vehicle.location || 'Apex Showroom'}</Text>
         </View>
       </View>
@@ -71,37 +78,29 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire }) {
       <View style={styles.content}>
         {/* Make & Year */}
         <View style={styles.brandRow}>
-          <Text style={styles.makeLabel}>{vehicle.make}</Text>
+          <Text style={styles.makeLabel} numberOfLines={1}>{vehicle.make}</Text>
           <Text style={styles.yearLabel}>{vehicle.year}</Text>
         </View>
 
-        {/* Title & Price */}
-        <View style={styles.titleRow}>
-          <Text style={styles.titleText} numberOfLines={1}>
-            {vehicle.model}
-          </Text>
-          <Text style={styles.priceText}>
-            ${vehicle.price?.toLocaleString()}
-          </Text>
-        </View>
+        {/* Title */}
+        <Text style={styles.titleText} numberOfLines={1}>
+          {vehicle.model}
+        </Text>
 
-        {/* Specs Grid */}
+        {/* Price */}
+        <Text style={styles.priceText}>
+          ${vehicle.price?.toLocaleString()}
+        </Text>
+
+        {/* Specs Pill Row */}
         <View style={styles.specsGrid}>
           <View style={styles.specCell}>
-            <MaterialCommunityIcons name="speedometer" size={15} color="#94A3B8" />
-            <Text style={styles.specText}>{vehicle.mileage?.toLocaleString()} mi</Text>
+            <MaterialCommunityIcons name="speedometer" size={12} color="#64748B" />
+            <Text style={styles.specText} numberOfLines={1}>{vehicle.mileage?.toLocaleString()} mi</Text>
           </View>
           <View style={styles.specCell}>
-            <MaterialCommunityIcons name="gas-station" size={15} color="#94A3B8" />
-            <Text style={styles.specText}>{vehicle.fuelType}</Text>
-          </View>
-          <View style={styles.specCell}>
-            <MaterialCommunityIcons name="car-shift-pattern" size={15} color="#94A3B8" />
-            <Text style={styles.specText}>{vehicle.transmission}</Text>
-          </View>
-          <View style={styles.specCell}>
-            <FontAwesome5 name="car-side" size={12} color="#94A3B8" />
-            <Text style={styles.specText}>{vehicle.bodyType}</Text>
+            <MaterialCommunityIcons name="gas-station" size={12} color="#64748B" />
+            <Text style={styles.specText} numberOfLines={1}>{vehicle.fuelType}</Text>
           </View>
         </View>
 
@@ -109,42 +108,51 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire }) {
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={styles.inquireButton}
-            onPress={() => onInquire(vehicle)}
+            onPress={(e) => {
+              if (e && e.stopPropagation) e.stopPropagation();
+              onInquire(vehicle);
+            }}
             activeOpacity={0.7}
           >
-            <Text style={styles.inquireButtonText}>Quick Inquiry</Text>
+            <Ionicons name="chatbubbles-outline" size={13} color="#2563EB" />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.detailsButton}
-            onPress={() => onViewDetails(vehicle)}
+            onPress={(e) => {
+              if (e && e.stopPropagation) e.stopPropagation();
+              onViewDetails(vehicle);
+            }}
             activeOpacity={0.8}
           >
-            <Text style={styles.detailsButtonText}>View Details</Text>
-            <Ionicons name="arrow-forward" size={14} color="#FFFFFF" style={{ marginLeft: 5 }} />
+            <Text style={styles.detailsButtonText}>Details</Text>
+            <Ionicons name="arrow-forward" size={11} color="#FFFFFF" style={{ marginLeft: 3 }} />
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   cardContainer: {
+    flex: 1,
+    minWidth: '47%',
+    maxWidth: '50%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 20,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   imageContainer: {
-    height: 205,
+    height: 125,
     width: '100%',
     position: 'relative',
     backgroundColor: '#090D16',
@@ -155,34 +163,34 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(9, 13, 22, 0.22)',
+    backgroundColor: 'rgba(9, 13, 22, 0.18)',
   },
   badge: {
     position: 'absolute',
-    top: 14,
-    left: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
+    top: 7,
+    left: 7,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: 8.5,
     fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 0.7,
+    letterSpacing: 0.5,
   },
   favoriteButton: {
     position: 'absolute',
-    top: 14,
-    right: 14,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    top: 7,
+    right: 7,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: 'rgba(9, 13, 22, 0.65)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -195,12 +203,13 @@ const styles = StyleSheet.create({
   },
   locationPill: {
     position: 'absolute',
-    bottom: 12,
-    left: 14,
+    bottom: 6,
+    left: 6,
+    right: 6,
     backgroundColor: 'rgba(9, 13, 22, 0.85)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -208,65 +217,62 @@ const styles = StyleSheet.create({
   },
   locationPillText: {
     color: '#F1F5F9',
-    fontSize: 11,
+    fontSize: 9.5,
     fontWeight: '600',
+    flex: 1,
   },
   content: {
-    padding: 18,
+    padding: 10,
   },
   brandRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   makeLabel: {
-    fontSize: 11.5,
+    fontSize: 9.5,
     fontWeight: '800',
     color: '#64748B',
     textTransform: 'uppercase',
-    letterSpacing: 0.7,
+    letterSpacing: 0.5,
+    flex: 1,
   },
   yearLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '800',
     color: '#2563EB',
   },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-    gap: 8,
-  },
   titleText: {
-    fontSize: 18,
+    fontSize: 13.5,
     fontWeight: '800',
     color: '#0F172A',
-    flex: 1,
+    marginBottom: 2,
   },
   priceText: {
-    fontSize: 19,
+    fontSize: 14.5,
     fontWeight: '900',
-    color: '#0F172A',
+    color: '#2563EB',
+    marginBottom: 6,
   },
   specsGrid: {
     flexDirection: 'row',
     backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingVertical: 11,
-    paddingHorizontal: 10,
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
     borderWidth: 1,
     borderColor: '#F1F5F9',
-    marginBottom: 16,
+    marginBottom: 8,
+    justifyContent: 'space-around',
   },
   specCell: {
-    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
   },
   specText: {
-    fontSize: 10.5,
+    fontSize: 9.5,
     color: '#475569',
     fontWeight: '600',
   },
@@ -276,37 +282,37 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
-    paddingTop: 14,
-    gap: 10,
+    paddingTop: 8,
+    gap: 6,
   },
   inquireButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: '#F1F5F9',
-  },
-  inquireButtonText: {
-    color: '#334155',
-    fontWeight: '700',
-    fontSize: 13,
+    paddingVertical: 7,
+    paddingHorizontal: 9,
+    borderRadius: 8,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(37, 99, 235, 0.2)',
   },
   detailsButton: {
+    flex: 1,
     backgroundColor: '#090D16',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 12,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowRadius: 2,
     elevation: 2,
   },
   detailsButtonText: {
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 11.5,
   },
 });

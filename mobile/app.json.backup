@@ -12,10 +12,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.apexmotors.app",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "bundleIdentifier": "com.apexmotors.app"
     },
     "android": {
       "package": "com.apexmotors.app",
@@ -34,12 +31,11 @@
     },
     "extra": {
       "eas": {
-        "projectId": "f93fa11d-bbdc-4f34-a901-824818f28306"
+        "projectId": "1c068653-d53e-484a-acd5-cf554891f5bf"
       }
     },
     "plugins": [
       "expo-font"
-    ],
-    "owner": "webindiastack"
+    ]
   }
 }

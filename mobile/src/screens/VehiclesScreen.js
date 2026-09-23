@@ -158,6 +158,8 @@ export default function VehiclesScreen({
       <FlatList
         data={filteredVehicles}
         keyExtractor={item => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
         renderItem={({ item }) => (
           <VehicleCard
             vehicle={item}
@@ -350,8 +352,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
     paddingBottom: 40,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    gap: 10,
   },
   emptyContainer: {
     alignItems: 'center',

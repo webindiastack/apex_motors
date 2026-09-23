@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, Linking } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, Linking, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFavorites } from '../context/FavoritesContext';
 
 export default function DetailsScreen({ vehicle, onBack, onInquire }) {
+  const insets = useSafeAreaInsets();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
@@ -198,11 +200,18 @@ export default function DetailsScreen({ vehicle, onBack, onInquire }) {
         )}
 
         {/* Bottom space */}
-        <View style={{ height: 110 }} />
+        <View style={{ height: 130 + (insets?.bottom || 0) }} />
       </ScrollView>
 
       {/* Fixed Sticky Action Bar */}
-      <View style={styles.stickyFooter}>
+      <View style={[
+        styles.stickyFooter,
+        {
+          paddingBottom: Platform.OS === 'web'
+            ? 'calc(14px + env(safe-area-inset-bottom, 0px))'
+            : Math.max((insets?.bottom || 0) + 12, 18),
+        }
+      ]}>
         <TouchableOpacity style={styles.callDealerBtn} onPress={handleCall} activeOpacity={0.7}>
           <Ionicons name="call-outline" size={20} color="#0F172A" />
         </TouchableOpacity>
@@ -220,6 +229,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    position: 'relative',
+    overflow: 'hidden',
   },
   notFoundContainer: {
     flex: 1,
@@ -476,6 +487,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 8,
+    zIndex: 1000,
+    ...(Platform.OS === 'web' ? {
+      position: 'fixed',
+    } : {}),
   },
   callDealerBtn: {
     width: 50,

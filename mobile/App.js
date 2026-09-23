@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, BackHandler, SafeAreaView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import Header from './src/components/Header';
@@ -25,7 +25,30 @@ import {
   saveInquiries
 } from './src/data/vehicles';
 
+// Global Web Layout Fix: Ensure html, body, and #root lock to viewport height (100vh)
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const styleId = 'rnw-fixed-layout-style';
+  if (!document.getElementById(styleId)) {
+    const styleElement = document.createElement('style');
+    styleElement.id = styleId;
+    styleElement.textContent = `
+      html, body, #root {
+        height: 100% !important;
+        height: 100vh !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
+  }
+}
+
 function MainApp() {
+  const insets = useSafeAreaInsets();
   const { favoritesCount } = useFavorites();
   const { showToast } = useToast();
 
@@ -154,7 +177,7 @@ function MainApp() {
 
   const tabs = [
     { id: 'home', label: 'Home', icon: 'home', iconOutline: 'home-outline' },
-    { id: 'vehicles', label: 'Inventory', icon: 'car-sport', iconOutline: 'car-sport-outline' },
+    { id: 'vehicles', label: 'Vehicles', icon: 'car-sport', iconOutline: 'car-sport-outline' },
     { id: 'favorites', label: 'Saved', icon: 'heart', iconOutline: 'heart-outline', badge: favoritesCount },
     { id: 'admin', label: 'Admin', icon: 'shield-checkmark', iconOutline: 'shield-checkmark-outline' },
     { id: 'more', label: 'More', icon: 'ellipsis-horizontal-circle', iconOutline: 'ellipsis-horizontal-circle-outline' },
@@ -268,7 +291,14 @@ function MainApp() {
 
       {/* Bottom Tab Navigation Bar - Selected in Pure White with frosted capsule */}
       {!selectedVehicle && (
-        <View style={styles.tabBar}>
+        <View style={[
+          styles.tabBar,
+          {
+            paddingBottom: Platform.OS === 'web'
+              ? 'calc(16px + env(safe-area-inset-bottom, 0px))'
+              : Math.max(insets.bottom + 12, 20),
+          }
+        ]}>
           {tabs.map(tab => {
             const isSelected = activeTab === tab.id;
             return (
@@ -330,15 +360,18 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    height: Platform.OS === 'web' ? '100vh' : '100%',
+    maxHeight: Platform.OS === 'web' ? '100vh' : undefined,
     backgroundColor: '#090D16',
     paddingTop: Platform.OS === 'android' ? 25 : 0,
+    overflow: 'hidden',
   },
   content: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    overflow: 'hidden',
   },
   tabBar: {
-    height: 68,
     backgroundColor: '#090D16',
     flexDirection: 'row',
     alignItems: 'center',
@@ -346,13 +379,22 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 8,
-    paddingBottom: 4,
+    paddingTop: 10,
+    paddingBottom: 20,
+    ...(Platform.OS === 'web' ? {
+      position: 'sticky',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1000,
+      flexShrink: 0,
+    } : {}),
   },
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    height: '100%',
+    paddingVertical: 2,
   },
   tabCapsule: {
     alignItems: 'center',
