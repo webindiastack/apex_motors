@@ -1,38 +1,73 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, ScrollView, Animated, TouchableOpacity, Platform, Image, Easing } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Platform,
+  Image,
+  Dimensions,
+  Animated,
+} from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import VehicleCard from '../components/VehicleCard';
+import { ALL_REVIEWS } from '../data/reviews';
 
-// 3 Curated Luxury Vehicles: Range Rover, BMW, and the Iconic Black Car Background
+// 3 Curated Luxury Fleet Cover Vehicles
 const SLIDESHOW_IMAGES = [
   {
     id: 'range-rover',
-    name: 'Range Rover',
+    name: 'Range Rover Sport',
+    tagline: 'Supercharged V8 • Flagship Luxury SUV',
+    badge: 'FLAGSHIP SUV',
+    accent: '#38BDF8',
     url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1600&q=82',
   },
   {
     id: 'bmw',
-    name: 'BMW',
+    name: 'BMW M5 Competition',
+    tagline: '617 HP • High-Performance Twin-Turbo V8',
+    badge: 'M PERFORMANCE',
+    accent: '#60A5FA',
     url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1600&q=82',
   },
   {
-    id: 'black-car',
-    name: 'Black Car',
+    id: 'porsche',
+    name: 'Porsche Panamera Turbo',
+    tagline: 'Twin-Turbo V8 • Prestige Grand Tourer',
+    badge: 'PRESTIGE GT',
+    accent: '#F43F5E',
     url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&q=82',
   },
 ];
 
 export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInquire, onSelectCategory }) {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
-  const [baseImageUrl, setBaseImageUrl] = useState(SLIDESHOW_IMAGES[0].url);
-  const [overlayImageUrl, setOverlayImageUrl] = useState(SLIDESHOW_IMAGES[0].url);
+  const activeSlideRef = useRef(0);
 
-  // Animated opacity for the top dissolve layer (0 -> 1)
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const currentSlideRef = useRef(0);
-  const isTransitioningRef = useRef(false);
-  const targetImageRef = useRef(SLIDESHOW_IMAGES[0].url);
-  const timerRef = useRef(null);
+  // Animated opacity values for seamless cross-fade between slides
+  const fadeAnims = useRef(
+    SLIDESHOW_IMAGES.map((_, i) => new Animated.Value(i === 0 ? 1 : 0))
+  ).current;
+
+  // Smooth Cross-Fade Transition
+  const transitionToSlide = (targetIndex) => {
+    if (targetIndex === activeSlideRef.current) return;
+    activeSlideRef.current = targetIndex;
+    setActiveSlideIndex(targetIndex);
+
+    Animated.parallel(
+      fadeAnims.map((anim, i) =>
+        Animated.timing(anim, {
+          toValue: i === targetIndex ? 1 : 0,
+          duration: 1000,
+          useNativeDriver: Platform.OS !== 'web',
+        })
+      )
+    ).start();
+  };
 
   // Preload all 3 images in browser / native memory immediately
   useEffect(() => {
@@ -45,70 +80,15 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
     });
   }, []);
 
-  // When baseImageUrl updates in the DOM, safely reset overlay opacity with zero flicker
+  // Auto-play slideshow every 9s with gentle cross-fade
   useEffect(() => {
-    if (baseImageUrl === targetImageRef.current) {
-      overlayOpacity.setValue(0);
-      isTransitioningRef.current = false;
-    }
-  }, [baseImageUrl, overlayOpacity]);
-
-  // Smooth Cross-Fade Dissolve Transition
-  const transitionToSlide = (targetIndex) => {
-    if (targetIndex === currentSlideRef.current || isTransitioningRef.current) return;
-
-    isTransitioningRef.current = true;
-    const nextItem = SLIDESHOW_IMAGES[targetIndex];
-    targetImageRef.current = nextItem.url;
-
-    // Load next image onto the top overlay layer
-    setOverlayImageUrl(nextItem.url);
-    setActiveSlideIndex(targetIndex);
-    overlayOpacity.setValue(0);
-
-  // Silky smooth 1800ms slow-motion cross-dissolve directly on top of the solid base layer
-    Animated.timing(overlayOpacity, {
-      toValue: 1,
-      duration: 1800,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      useNativeDriver: Platform.OS !== 'web',
-    }).start(({ finished }) => {
-      if (finished) {
-        currentSlideRef.current = targetIndex;
-        // Promote next image to the base layer; useEffect will then silently reset overlayOpacity
-        setBaseImageUrl(nextItem.url);
-      }
-    });
-  };
-
-  // Auto-play slideshow at a relaxed, slow luxury pace (every 7 seconds)
-  useEffect(() => {
-    const startTimer = () => {
-      timerRef.current = setInterval(() => {
-        const next = (currentSlideRef.current + 1) % SLIDESHOW_IMAGES.length;
-        transitionToSlide(next);
-      }, 7000);
-    };
-
-    startTimer();
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
-
-  // Manual dot tap with seamless dissolve
-  const handleSelectSlide = (targetIndex) => {
-    if (targetIndex === currentSlideRef.current || isTransitioningRef.current) return;
-
-    if (timerRef.current) clearInterval(timerRef.current);
-    transitionToSlide(targetIndex);
-
-    timerRef.current = setInterval(() => {
-      const next = (currentSlideRef.current + 1) % SLIDESHOW_IMAGES.length;
+    const timer = setInterval(() => {
+      const next = (activeSlideRef.current + 1) % SLIDESHOW_IMAGES.length;
       transitionToSlide(next);
-    }, 7000);
-  };
+    }, 9000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const featuredVehicles = vehicles.filter(v => v.badge === 'Featured' || v.badge === 'Hot Deal').slice(0, 4);
   const newArrivals = vehicles.filter(v => v.badge === 'New Arrival').slice(0, 2);
@@ -122,42 +102,55 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Hero Banner with Smooth Cross-Fade Background Images */}
+      {/* Hero Banner with Full Height Cross-Fade Background Images */}
       <View style={styles.heroContainer}>
-        {/* Layer 1: Solid Base Image (Underneath, never dips into darkness) */}
-        <Image
-          source={{ uri: baseImageUrl }}
-          style={styles.heroBackgroundImage}
-          resizeMode="cover"
+        {/* Full-bleed background images with cross-fade */}
+        {SLIDESHOW_IMAGES.map((slide, idx) => (
+          <Animated.Image
+            key={slide.id}
+            source={{ uri: slide.url }}
+            style={[
+              styles.heroBgImage,
+              {
+                opacity: fadeAnims[idx],
+                zIndex: activeSlideIndex === idx ? 2 : 1,
+              },
+              Platform.OS === 'web' && {
+                transition: 'opacity 1s ease-in-out',
+              },
+            ]}
+            resizeMode="cover"
+          />
+        ))}
+
+        {/* Top Vignette Shadow */}
+        <LinearGradient
+          colors={['rgba(9, 13, 22, 0.75)', 'transparent']}
+          style={styles.topShadow}
+          pointerEvents="none"
         />
 
-        {/* Layer 2: Incoming Dissolve Image (Physically on top in JSX, smoothly fades in) */}
-        <Animated.Image
-          source={{ uri: overlayImageUrl }}
-          style={[
-            styles.heroBackgroundImage,
-            { opacity: overlayOpacity }
-          ]}
-          resizeMode="cover"
+        {/* Bottom Ambient Dark Shadow for maximum text readability */}
+        <LinearGradient
+          colors={['transparent', 'rgba(9, 13, 22, 0.4)', 'rgba(9, 13, 22, 0.88)', '#090D16']}
+          style={styles.bottomShadow}
+          pointerEvents="none"
         />
 
-        {/* Ambient Dark Gradient Wash for text readability */}
-        <View style={styles.ambientBottomWash} />
-
-        {/* Original Content Overlay */}
+        {/* Text Written Directly On Top Of Background Image */}
         <View style={styles.heroOverlay}>
           {/* Ambient Fleet Tag */}
           <View style={styles.heroBadge}>
-            <Ionicons name="sparkles" size={12} color="#60A5FA" style={{ marginRight: 5 }} />
+            <Ionicons name="sparkles" size={11} color="#60A5FA" style={{ marginRight: 5 }} />
             <Text style={styles.heroBadgeText}>APEX MOTORS 2026 FLEET COLLECTION</Text>
           </View>
 
-          {/* Original Clean Heading */}
+          {/* Clean Heading */}
           <Text style={styles.heroTitle}>
             Find Your <Text style={styles.heroHighlight}>Perfect Vehicle</Text>
           </Text>
 
-          {/* Original Subtitle */}
+          {/* Subtitle */}
           <Text style={styles.heroSubtitle}>
             Browse hand-inspected luxury sedans, sports coupes, and high-performance SUVs with certified nationwide warranty.
           </Text>
@@ -182,7 +175,7 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
             </TouchableOpacity>
           </View>
 
-          {/* Subtle Slide Indicator Dots for Range Rover, BMW, and Black Car */}
+          {/* Clean Indicator Dots Only */}
           <View style={styles.dotsRow}>
             {SLIDESHOW_IMAGES.map((_, idx) => {
               const isActive = activeSlideIndex === idx;
@@ -190,7 +183,7 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
                 <TouchableOpacity
                   key={idx}
                   style={[styles.dot, isActive && styles.dotActive]}
-                  onPress={() => handleSelectSlide(idx)}
+                  onPress={() => transitionToSlide(idx)}
                   activeOpacity={0.8}
                 />
               );
@@ -207,9 +200,21 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={[styles.statNumber, { color: '#38BDF8' }]}>4.9★</Text>
-          <Text style={styles.statLabel}>Client Rating</Text>
+          <Text style={styles.statNumber}>160-Pt</Text>
+          <Text style={styles.statLabel}>Certified</Text>
         </View>
+        <View style={styles.statDivider} />
+        <TouchableOpacity
+          style={styles.statItem}
+          onPress={() => onNavigate('reviews')}
+          activeOpacity={0.75}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <Ionicons name="star" size={15} color="#F59E0B" />
+            <Text style={[styles.statNumber, { color: '#F59E0B' }]}>4.9</Text>
+          </View>
+          <Text style={styles.statLabel}>4.9 Stars Reviews</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Category Pills */}
@@ -267,6 +272,97 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
             />
           ))}
         </View>
+      </View>
+
+      {/* 5-Star Reviews & Client Testimonials Section - Left to Right Scroll */}
+      <View style={styles.reviewsHomeSection}>
+        <View style={styles.reviewsHomeHeaderRow}>
+          <View style={{ flex: 1 }}>
+            <View style={styles.reviewsHomeTagBadge}>
+              <Ionicons name="star" size={11} color="#F59E0B" style={{ marginRight: 4 }} />
+              <Text style={styles.reviewsHomeTagText}>5-STAR CLIENT EXPERIENCES</Text>
+            </View>
+            <Text style={styles.reviewsHomeSectionTitle}>Client Reviews & Ratings</Text>
+            <Text style={styles.reviewsHomeSectionSub}>Verified owner feedback across our entire luxury fleet</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.reviewsHomeSummaryBadge}
+            onPress={() => onNavigate('reviews')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.reviewsHomeScoreRow}>
+              <Text style={styles.reviewsHomeScoreNumber}>5.0</Text>
+              <View style={styles.reviewsHomeMiniStars}>
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Ionicons key={s} name="star" size={11} color="#F59E0B" />
+                ))}
+              </View>
+            </View>
+            <Text style={styles.reviewsHomeCountText}>128+ verified reviews ›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Left to Right Horizontal Scroll of Reviews */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.reviewsHomeScroll}
+        >
+          {ALL_REVIEWS.map((rev) => (
+            <View key={rev.id} style={styles.reviewHomeCard}>
+              {/* User Row */}
+              <View style={styles.revHomeUserRow}>
+                <View style={styles.revHomeAvatarCircle}>
+                  <Text style={styles.revHomeAvatarInitials}>{rev.avatar}</Text>
+                </View>
+                <View style={styles.revHomeUserMeta}>
+                  <Text style={styles.revHomeAuthorName}>{rev.author}</Text>
+                  <View style={styles.revHomeVerifiedPill}>
+                    <Ionicons name="checkmark-circle" size={11} color="#10B981" style={{ marginRight: 3 }} />
+                    <Text style={styles.revHomeRoleText}>{rev.role}</Text>
+                  </View>
+                </View>
+                <Text style={styles.revHomeDate}>{rev.date}</Text>
+              </View>
+
+              {/* 5 Gold Stars & Car Model */}
+              <View style={styles.revHomeStarModelRow}>
+                <View style={styles.revHomeStarsWrap}>
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Ionicons key={s} name="star" size={13} color="#F59E0B" />
+                  ))}
+                </View>
+                <View style={styles.revHomeCarBadge}>
+                  <Ionicons name="car-sport" size={11} color="#2563EB" style={{ marginRight: 4 }} />
+                  <Text style={styles.revHomeCarText} numberOfLines={1}>
+                    {rev.carYear} {rev.carMake} {rev.carModel}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Review Headline & Comment */}
+              <Text style={styles.revHomeTitle} numberOfLines={1}>
+                "{rev.title}"
+              </Text>
+              <Text style={styles.revHomeComment} numberOfLines={3}>
+                {rev.comment}
+              </Text>
+
+              {/* Footer */}
+              <View style={styles.revHomeFooterRow}>
+                <View style={styles.revHomeLocationRow}>
+                  <Ionicons name="location-outline" size={11} color="#64748B" style={{ marginRight: 2 }} />
+                  <Text style={styles.revHomeLocationText}>{rev.location}</Text>
+                </View>
+                <View style={styles.revHomeVerifiedTag}>
+                  <Ionicons name="shield-checkmark" size={10} color="#059669" style={{ marginRight: 3 }} />
+                  <Text style={styles.revHomeVerifiedText}>Verified Handover</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Why Apex Motors Banner - Ultra Premium Dark Cockpit Style */}
@@ -350,43 +446,71 @@ const styles = StyleSheet.create({
   },
   heroContainer: {
     width: '100%',
-    height: 430,
+    height: 480,
     backgroundColor: '#090D16',
     position: 'relative',
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },
-  heroBackgroundImage: {
-    ...StyleSheet.absoluteFillObject,
+  heroBgImage: {
     width: '100%',
     height: '100%',
-  },
-  ambientBottomWash: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
-    height: 280,
-    backgroundColor: 'rgba(9, 13, 22, 0.45)',
+    bottom: 0,
+  },
+  topShadow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: 110,
+    zIndex: 10,
+    ...(Platform.OS === 'web' ? {
+      background: 'linear-gradient(to bottom, rgba(9, 13, 22, 0.75) 0%, transparent 100%)',
+    } : {}),
+  },
+  bottomShadow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 320,
+    zIndex: 10,
+    ...(Platform.OS === 'web' ? {
+      background: 'linear-gradient(to top, #090D16 0%, rgba(9, 13, 22, 0.88) 45%, rgba(9, 13, 22, 0.4) 75%, transparent 100%)',
+    } : {}),
   },
   heroOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
     backgroundColor: 'transparent',
     paddingHorizontal: 22,
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 22,
-    zIndex: 10,
+    zIndex: 20,
   },
   heroBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
-    borderColor: 'rgba(59, 130, 246, 0.4)',
+    backgroundColor: 'rgba(37, 99, 235, 0.18)',
+    borderColor: 'rgba(59, 130, 246, 0.45)',
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 4.5,
     borderRadius: 20,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
   },
   heroBadgeText: {
     color: '#93C5FD',
@@ -395,37 +519,46 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   heroTitle: {
-    fontSize: 28,
+    fontSize: 27,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: 0.3,
-    lineHeight: 34,
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    lineHeight: 33,
+    textShadowColor: 'rgba(0, 0, 0, 0.95)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    textShadowRadius: 10,
+    ...(Platform.OS === 'web' ? {
+      textShadow: '0 2px 10px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.85)',
+    } : {}),
   },
   heroHighlight: {
     color: '#38BDF8',
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowColor: 'rgba(0, 0, 0, 0.95)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    textShadowRadius: 10,
+    ...(Platform.OS === 'web' ? {
+      textShadow: '0 2px 10px rgba(0,0,0,0.95), 0 0 20px rgba(56,189,248,0.5)',
+    } : {}),
   },
   heroSubtitle: {
-    color: '#F1F5F9',
-    fontSize: 13,
-    marginTop: 8,
-    lineHeight: 19,
-    textShadowColor: 'rgba(0, 0, 0, 0.85)',
+    color: '#E2E8F0',
+    fontSize: 12.5,
+    marginTop: 7,
+    lineHeight: 18.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 5,
+    textShadowRadius: 6,
+    ...(Platform.OS === 'web' ? {
+      textShadow: '0 1px 8px rgba(0,0,0,0.9)',
+    } : {}),
   },
   heroActionRow: {
     flexDirection: 'row',
-    marginTop: 20,
+    marginTop: 18,
     gap: 12,
   },
   heroPrimaryBtn: {
-    flex: 1.4,
+    flex: 1.35,
     backgroundColor: '#2563EB',
     paddingVertical: 13,
     borderRadius: 14,
@@ -438,6 +571,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.45,
     shadowRadius: 10,
     elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   heroPrimaryText: {
     color: '#FFFFFF',
@@ -445,10 +580,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   heroSecondaryBtn: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    flex: 0.9,
+    backgroundColor: 'rgba(255, 255, 255, 0.09)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     paddingVertical: 13,
     borderRadius: 14,
     alignItems: 'center',
@@ -462,14 +597,14 @@ const styles = StyleSheet.create({
   dotsRow: {
     flexDirection: 'row',
     gap: 7,
-    marginTop: 18,
+    marginTop: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dot: {
     width: 7,
-    height: 7,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
   },
   dotActive: {
@@ -480,12 +615,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 6,
+    elevation: 3,
   },
   statsRibbon: {
     flexDirection: 'row',
     backgroundColor: '#090D16',
     marginHorizontal: 16,
-    marginTop: -16,
+    marginTop: -18,
     borderRadius: 18,
     paddingVertical: 14,
     paddingHorizontal: 8,
@@ -697,5 +833,205 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     marginTop: 3,
     lineHeight: 16,
+  },
+  // Reviews Section Styles
+  reviewsHomeSection: {
+    marginBottom: 28,
+  },
+  reviewsHomeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 14,
+    gap: 12,
+  },
+  reviewsHomeTagBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  reviewsHomeTagText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#D97706',
+    letterSpacing: 0.5,
+  },
+  reviewsHomeSectionTitle: {
+    fontSize: 19,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  reviewsHomeSectionSub: {
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  reviewsHomeSummaryBadge: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  reviewsHomeScoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  reviewsHomeScoreNumber: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  reviewsHomeMiniStars: {
+    flexDirection: 'row',
+    gap: 1.5,
+  },
+  reviewsHomeCountText: {
+    fontSize: 9,
+    color: '#64748B',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  reviewsHomeScroll: {
+    paddingHorizontal: 16,
+    gap: 12,
+    paddingBottom: 4,
+  },
+  reviewHomeCard: {
+    width: 290,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  revHomeUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  revHomeAvatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#0F172A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  revHomeAvatarInitials: {
+    color: '#F8FAFC',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  revHomeUserMeta: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  revHomeAuthorName: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  revHomeVerifiedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 1,
+  },
+  revHomeRoleText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  revHomeDate: {
+    fontSize: 10.5,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  revHomeStarModelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 9,
+  },
+  revHomeStarsWrap: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  revHomeCarBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: '55%',
+  },
+  revHomeCarText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#2563EB',
+  },
+  revHomeTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+    lineHeight: 17,
+  },
+  revHomeComment: {
+    fontSize: 11.5,
+    color: '#475569',
+    lineHeight: 16.5,
+    marginBottom: 10,
+  },
+  revHomeFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 8,
+  },
+  revHomeLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  revHomeLocationText: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  revHomeVerifiedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  revHomeVerifiedText: {
+    fontSize: 9.5,
+    color: '#059669',
+    fontWeight: '700',
   },
 });

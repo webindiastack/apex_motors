@@ -14,6 +14,7 @@ import FavoritesScreen from './src/screens/FavoritesScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import AboutScreen from './src/screens/AboutScreen';
 import ContactScreen from './src/screens/ContactScreen';
+import ReviewsScreen from './src/screens/ReviewsScreen';
 
 import { FavoritesProvider, useFavorites } from './src/context/FavoritesContext';
 import { ToastProvider, useToast } from './src/context/ToastContext';
@@ -59,7 +60,7 @@ function MainApp() {
   // Navigation State
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'vehicles' | 'favorites' | 'admin' | 'more'
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [moreSection, setMoreSection] = useState('about'); // 'about' | 'contact'
+  const [moreSection, setMoreSection] = useState('about'); // 'about' | 'reviews' | 'contact'
 
   // Inquiry Modal State
   const [inquiryVehicle, setInquiryVehicle] = useState(null);
@@ -170,6 +171,17 @@ function MainApp() {
     setSelectedVehicle(veh);
   };
 
+  const handleNavigate = (tabName, section = null) => {
+    setSelectedVehicle(null);
+    if (tabName === 'reviews') {
+      setActiveTab('more');
+      setMoreSection('reviews');
+    } else {
+      setActiveTab(tabName);
+      if (section) setMoreSection(section);
+    }
+  };
+
   const handleCategorySelect = (bodyType) => {
     setFilters(prev => ({ ...prev, bodyType }));
     setActiveTab('vehicles');
@@ -184,7 +196,14 @@ function MainApp() {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[
+      styles.safeArea,
+      {
+        paddingTop: Platform.OS === 'android'
+          ? 28
+          : (Platform.OS === 'web' ? 14 : Math.max(insets.top, 14)),
+      }
+    ]}>
       <StatusBar style="light" backgroundColor="#090D16" />
 
       {/* Main Header */}
@@ -210,7 +229,7 @@ function MainApp() {
             {activeTab === 'home' && (
               <HomeScreen
                 vehicles={vehicles}
-                onNavigate={setActiveTab}
+                onNavigate={handleNavigate}
                 onViewDetails={handleViewDetails}
                 onInquire={handleOpenInquiry}
                 onSelectCategory={handleCategorySelect}
@@ -236,7 +255,7 @@ function MainApp() {
                 vehicles={vehicles}
                 onViewDetails={handleViewDetails}
                 onInquire={handleOpenInquiry}
-                onNavigate={setActiveTab}
+                onNavigate={handleNavigate}
               />
             )}
 
@@ -255,7 +274,7 @@ function MainApp() {
 
             {activeTab === 'more' && (
               <View style={styles.moreContainer}>
-                {/* Secondary Tab Switcher - Aesthetic White Pill Active */}
+                {/* Secondary Tab Switcher - 3 Clean Tabs */}
                 <View style={styles.moreSubNav}>
                   <TouchableOpacity
                     style={[styles.moreSubTab, moreSection === 'about' && styles.moreSubTabActive]}
@@ -263,8 +282,25 @@ function MainApp() {
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.moreSubTabText, moreSection === 'about' && styles.moreSubTabTextActive]}>
-                      About Dealership
+                      About
                     </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.moreSubTab, moreSection === 'reviews' && styles.moreSubTabActive]}
+                    onPress={() => setMoreSection('reviews')}
+                    activeOpacity={0.8}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <Ionicons
+                        name="star"
+                        size={12}
+                        color={moreSection === 'reviews' ? '#D97706' : '#F59E0B'}
+                      />
+                      <Text style={[styles.moreSubTabText, moreSection === 'reviews' && styles.moreSubTabTextActive]}>
+                        Reviews (5★)
+                      </Text>
+                    </View>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -273,16 +309,14 @@ function MainApp() {
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.moreSubTabText, moreSection === 'contact' && styles.moreSubTabTextActive]}>
-                      Contact & Locations
+                      Contact
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                {moreSection === 'about' ? (
-                  <AboutScreen onNavigate={setActiveTab} />
-                ) : (
-                  <ContactScreen onSubmitInquiry={handleSubmitInquiry} />
-                )}
+                {moreSection === 'about' && <AboutScreen onNavigate={handleNavigate} />}
+                {moreSection === 'reviews' && <ReviewsScreen onNavigate={handleNavigate} />}
+                {moreSection === 'contact' && <ContactScreen onSubmitInquiry={handleSubmitInquiry} />}
               </View>
             )}
           </>
@@ -295,9 +329,9 @@ function MainApp() {
           styles.tabBar,
           {
             paddingBottom: Platform.OS === 'web'
-              ? 'calc(28px + env(safe-area-inset-bottom, 0px))'
-              : Math.max(insets.bottom + 20, 32),
-            paddingTop: 12,
+              ? 'calc(20px + env(safe-area-inset-bottom, 0px))'
+              : Math.max(insets.bottom + 14, 24),
+            paddingTop: 10,
           }
         ]}>
           {tabs.map(tab => {
@@ -364,7 +398,7 @@ const styles = StyleSheet.create({
     height: Platform.OS === 'web' ? '100vh' : '100%',
     maxHeight: Platform.OS === 'web' ? '100vh' : undefined,
     backgroundColor: '#090D16',
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
+    paddingTop: Platform.OS === 'android' ? 28 : (Platform.OS === 'web' ? 14 : 14),
     overflow: 'hidden',
   },
   content: {
@@ -380,8 +414,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 8,
-    paddingTop: 12,
-    paddingBottom: 32,
+    paddingTop: 10,
+    paddingBottom: 24,
     ...(Platform.OS === 'web' ? {
       position: 'sticky',
       bottom: 0,
@@ -468,9 +502,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   moreSubTabText: {
-    fontSize: 13,
+    fontSize: 11.5,
     fontWeight: '600',
     color: '#94A3B8',
+    textAlign: 'center',
   },
   moreSubTabTextActive: {
     color: '#0F172A', // Dark text on white active pill

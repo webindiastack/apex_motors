@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, FlatList } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, FlatList, Image, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useToast } from '../context/ToastContext';
 import { MAKES, BODY_TYPES, FUEL_TYPES, TRANSMISSIONS } from '../data/vehicles';
 
@@ -18,8 +19,8 @@ export default function AdminScreen({
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passcode, setPasscode] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [passcode, setPasscode] = useState('1234');
+  const [showPassword, setShowPassword] = useState(true);
   const [authError, setAuthError] = useState('');
 
   const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'inquiries'
@@ -37,7 +38,7 @@ export default function AdminScreen({
   const [bodyType, setBodyType] = useState('Sedan');
   const [location, setLocation] = useState('Apex Central Showroom');
   const [badge, setBadge] = useState('Featured');
-  const [imageUrl, setImageUrl] = useState('');
+  const [images, setImages] = useState([]);
 
   // Stats
   const totalValuation = vehicles.reduce((sum, v) => sum + (v.price || 0), 0);
@@ -48,15 +49,17 @@ export default function AdminScreen({
     if (trimmed === 'admin' || trimmed === 'apex2026' || trimmed === '1234') {
       setIsAuthenticated(true);
       setAuthError('');
-      setPasscode('');
+      setPasscode('1234');
       showToast('Authenticated as Dealership Administrator', 'success');
     } else {
-      setAuthError('Invalid passcode. Try "admin" or "apex2026".');
+      setAuthError('Invalid passcode. Try "1234" or "admin".');
     }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+    setPasscode('1234');
+    setShowPassword(true);
     showToast('Admin Portal locked', 'info');
   };
 
@@ -72,7 +75,7 @@ export default function AdminScreen({
     setBodyType('Sedan');
     setLocation('Apex Central Showroom');
     setBadge('Featured');
-    setImageUrl('');
+    setImages([]);
     setModalOpen(true);
   };
 
@@ -88,8 +91,63 @@ export default function AdminScreen({
     setBodyType(v.bodyType || 'Sedan');
     setLocation(v.location || 'Apex Central Showroom');
     setBadge(v.badge || 'Featured');
-    setImageUrl(v.images?.[0] || '');
+    const existingImages = Array.isArray(v.images) && v.images.length > 0
+      ? [...v.images]
+      : (v.imageUrl ? [v.imageUrl] : []);
+    setImages(existingImages);
     setModalOpen(true);
+  };
+
+  const handlePickImages = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          showToast('Photo library permission is required to upload', 'error');
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        selectionLimit: 12,
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newUris = result.assets.map(a => a.uri).filter(Boolean);
+        setImages(prev => [...prev, ...newUris]);
+        showToast(
+          newUris.length > 1
+            ? `${newUris.length} photos added to vehicle`
+            : 'Photo added to vehicle',
+          'success'
+        );
+      }
+    } catch (err) {
+      console.error('Image picker error', err);
+      showToast('Could not open photo gallery', 'error');
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    setImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleSetCoverImage = (index) => {
+    if (index === 0) return;
+    setImages(prev => {
+      const target = prev[index];
+      const rest = prev.filter((_, idx) => idx !== index);
+      return [target, ...rest];
+    });
+    showToast('Set as main cover photo', 'info');
+  };
+
+  const handleClearAllImages = () => {
+    setImages([]);
+    showToast('All photos cleared', 'info');
   };
 
   const handleSaveVehicle = () => {
@@ -109,7 +167,9 @@ export default function AdminScreen({
       bodyType,
       location,
       badge,
-      images: imageUrl.trim() ? [imageUrl.trim()] : ['https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80'],
+      images: images.length > 0
+        ? images
+        : ['https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80'],
     };
 
     if (editingId) {
@@ -173,9 +233,13 @@ export default function AdminScreen({
           <View style={styles.authIconWrap}>
             <Ionicons name="lock-closed" size={32} color="#2563EB" />
           </View>
-          <Text style={styles.authTitle}>Dealership Security</Text>
+          <View style={styles.authBadge}>
+            <Ionicons name="shield-checkmark" size={11} color="#2563EB" style={{ marginRight: 4 }} />
+            <Text style={styles.authBadgeText}>DEALER ADMIN</Text>
+          </View>
+          <Text style={styles.authTitle}>Dealer Admin</Text>
           <Text style={styles.authSubtitle}>
-            Enter management passcode to unlock administrative inventory and lead management tools.
+            Enter admin passcode to unlock dealer inventory and lead management tools.
           </Text>
 
           {authError ? (
@@ -185,11 +249,31 @@ export default function AdminScreen({
             </View>
           ) : null}
 
+          {/* Prompt before the passcode: 1234 or admin */}
+          <View style={styles.passcodePromptRow}>
+            <Text style={styles.passcodePromptLabel}>Passcode:</Text>
+            <TouchableOpacity
+              onPress={() => setPasscode('1234')}
+              activeOpacity={0.7}
+              style={styles.quickChip}
+            >
+              <Text style={styles.quickChipText}>1234</Text>
+            </TouchableOpacity>
+            <Text style={styles.passcodeOrText}>or</Text>
+            <TouchableOpacity
+              onPress={() => setPasscode('admin')}
+              activeOpacity={0.7}
+              style={styles.quickChip}
+            >
+              <Text style={styles.quickChipText}>admin</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.passcodeInputWrap}>
             <Ionicons name="key-outline" size={18} color="#64748B" style={{ marginRight: 8 }} />
             <TextInput
               style={styles.passcodeInput}
-              placeholder="Enter passcode..."
+              placeholder="1234 or admin"
               placeholderTextColor="#94A3B8"
               secureTextEntry={!showPassword}
               value={passcode}
@@ -206,12 +290,12 @@ export default function AdminScreen({
 
           <TouchableOpacity style={styles.unlockBtn} onPress={handleLogin} activeOpacity={0.85}>
             <Ionicons name="shield-checkmark" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={styles.unlockBtnText}>Unlock Dashboard</Text>
+            <Text style={styles.unlockBtnText}>Unlock Admin Dashboard</Text>
           </TouchableOpacity>
 
           <View style={styles.hintWrap}>
             <Text style={styles.hintText}>
-              Passcode: <Text style={{ fontWeight: '800', color: '#2563EB' }}>admin</Text> or <Text style={{ fontWeight: '800', color: '#2563EB' }}>apex2026</Text>
+              Passcode: <Text style={{ fontWeight: '800', color: '#2563EB' }}>1234</Text> or <Text style={{ fontWeight: '800', color: '#2563EB' }}>admin</Text>
             </Text>
           </View>
         </View>
@@ -225,7 +309,11 @@ export default function AdminScreen({
       <View style={styles.header}>
         <View style={styles.headerTopRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Dealership Command</Text>
+            <View style={styles.adminTagBadge}>
+              <Ionicons name="shield-checkmark" size={11} color="#60A5FA" style={{ marginRight: 4 }} />
+              <Text style={styles.adminTagBadgeText}>DEALER ADMIN</Text>
+            </View>
+            <Text style={styles.headerTitle}>Dealer Admin</Text>
             <Text style={styles.headerSub}>Inventory & VIP leads management</Text>
           </View>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.75}>
@@ -489,13 +577,115 @@ export default function AdminScreen({
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Image URL</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="https://images.unsplash.com/..."
-                  value={imageUrl}
-                  onChangeText={setImageUrl}
-                />
+                <View style={styles.photoHeaderRow}>
+                  <View>
+                    <Text style={styles.formLabel}>Vehicle Photos ({images.length})</Text>
+                    <Text style={styles.photoSubLabel}>Upload multiple photos • First photo is main cover</Text>
+                  </View>
+                  {images.length > 0 && (
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      <TouchableOpacity
+                        style={styles.addMoreMiniBtn}
+                        onPress={handlePickImages}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="add-circle" size={14} color="#2563EB" />
+                        <Text style={styles.addMoreMiniText}>Add Photos</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.clearMiniBtn}
+                        onPress={handleClearAllImages}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="trash-outline" size={14} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+
+                {images.length === 0 ? (
+                  <TouchableOpacity
+                    style={styles.uploadDropzone}
+                    onPress={handlePickImages}
+                    activeOpacity={0.75}
+                  >
+                    <View style={styles.uploadIconBadge}>
+                      <Ionicons name="images" size={28} color="#2563EB" />
+                    </View>
+                    <Text style={styles.uploadPrimaryText}>Tap to Upload Multiple Photos</Text>
+                    <Text style={styles.uploadSecondaryText}>
+                      Select exterior, interior, engine & detail photos from device (JPG, PNG)
+                    </Text>
+                    <View style={styles.uploadBrowsePill}>
+                      <Ionicons name="cloud-upload-outline" size={15} color="#2563EB" style={{ marginRight: 6 }} />
+                      <Text style={styles.uploadBrowseText}>Select Multiple Photos</Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.multiPhotosContainer}>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.multiPhotosScroll}
+                    >
+                      {images.map((uri, idx) => {
+                        const isCover = idx === 0;
+                        return (
+                          <View key={`${uri}-${idx}`} style={styles.photoCard}>
+                            <Image source={{ uri }} style={styles.photoCardImg} resizeMode="cover" />
+
+                            {/* Badge */}
+                            <View style={[styles.photoCardBadge, isCover ? styles.photoCoverBadge : styles.photoOrderBadge]}>
+                              <Ionicons
+                                name={isCover ? "star" : "image-outline"}
+                                size={10}
+                                color={isCover ? "#F59E0B" : "#FFFFFF"}
+                                style={{ marginRight: 3 }}
+                              />
+                              <Text style={[styles.photoBadgeText, isCover && styles.photoCoverText]}>
+                                {isCover ? 'MAIN COVER' : `#${idx + 1}`}
+                              </Text>
+                            </View>
+
+                            {/* Delete Button */}
+                            <TouchableOpacity
+                              style={styles.photoDeleteBtn}
+                              onPress={() => handleRemoveImage(idx)}
+                              activeOpacity={0.8}
+                            >
+                              <Ionicons name="close" size={13} color="#FFFFFF" />
+                            </TouchableOpacity>
+
+                            {/* Set as Cover Action */}
+                            {!isCover && (
+                              <TouchableOpacity
+                                style={styles.setCoverBtn}
+                                onPress={() => handleSetCoverImage(idx)}
+                                activeOpacity={0.8}
+                              >
+                                <Ionicons name="star" size={10} color="#D97706" style={{ marginRight: 3 }} />
+                                <Text style={styles.setCoverBtnText}>Set Cover</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        );
+                      })}
+
+                      {/* Add Another Photo Tile */}
+                      <TouchableOpacity
+                        style={styles.addPhotoCardTile}
+                        onPress={handlePickImages}
+                        activeOpacity={0.75}
+                      >
+                        <View style={styles.addTileIconCircle}>
+                          <Ionicons name="add" size={22} color="#2563EB" />
+                        </View>
+                        <Text style={styles.addTileText}>Add More</Text>
+                        <Text style={styles.addTileSub}>Photos</Text>
+                      </TouchableOpacity>
+                    </ScrollView>
+                  </View>
+                )}
               </View>
 
               <View style={{ height: 20 }} />
@@ -547,12 +737,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#DBEAFE',
   },
+  authBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  authBadgeText: {
+    color: '#2563EB',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   authTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '900',
     color: '#0F172A',
     marginBottom: 6,
@@ -582,6 +789,36 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontWeight: '600',
     flexShrink: 1,
+  },
+  passcodePromptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    gap: 6,
+  },
+  passcodePromptLabel: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#334155',
+  },
+  quickChip: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  quickChipText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#2563EB',
+  },
+  passcodeOrText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
   },
   passcodeInputWrap: {
     flexDirection: 'row',
@@ -643,8 +880,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
+  adminTagBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  adminTagBadgeText: {
+    color: '#38BDF8',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: 0.5,
@@ -957,5 +1212,219 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 14,
+  },
+  uploadDropzone: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#93C5FD',
+    borderRadius: 16,
+    paddingVertical: 22,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadIconBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  uploadPrimaryText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  uploadSecondaryText: {
+    fontSize: 11.5,
+    color: '#64748B',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  uploadBrowsePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  uploadBrowseText: {
+    color: '#2563EB',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  photoHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  photoSubLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  addMoreMiniBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    gap: 4,
+  },
+  addMoreMiniText: {
+    color: '#2563EB',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  clearMiniBtn: {
+    backgroundColor: '#FEF2F2',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  multiPhotosContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 10,
+  },
+  multiPhotosScroll: {
+    gap: 10,
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  photoCard: {
+    width: 140,
+    height: 125,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#090D16',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  photoCardImg: {
+    width: '100%',
+    height: '100%',
+  },
+  photoCardBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  photoCoverBadge: {
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.6)',
+  },
+  photoCoverText: {
+    color: '#F59E0B',
+    fontWeight: '800',
+  },
+  photoOrderBadge: {
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+  },
+  photoBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  photoDeleteBtn: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(239, 68, 68, 0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  setCoverBtn: {
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
+    right: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    borderRadius: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+  },
+  setCoverBtnText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  addPhotoCardTile: {
+    width: 110,
+    height: 125,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#93C5FD',
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+  },
+  addTileIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  addTileText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#2563EB',
+  },
+  addTileSub: {
+    fontSize: 9.5,
+    color: '#64748B',
+    fontWeight: '600',
   },
 });

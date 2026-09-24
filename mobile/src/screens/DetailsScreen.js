@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, Linking, P
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFavorites } from '../context/FavoritesContext';
+import { ALL_REVIEWS } from '../data/reviews';
 
 export default function DetailsScreen({ vehicle, onBack, onInquire }) {
   const insets = useSafeAreaInsets();
@@ -198,6 +199,96 @@ export default function DetailsScreen({ vehicle, onBack, onInquire }) {
             ))}
           </View>
         )}
+
+        {/* All Cars Client Reviews - Left to Right Scroll with Stars */}
+        <View style={styles.reviewsCardSection}>
+          <View style={styles.reviewsHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <View style={styles.reviewsTagBadge}>
+                <Ionicons name="shield-checkmark" size={12} color="#2563EB" style={{ marginRight: 4 }} />
+                <Text style={styles.reviewsTagText}>VERIFIED OWNER RATINGS</Text>
+              </View>
+              <Text style={styles.reviewsTitle}>Client Reviews</Text>
+              <Text style={styles.reviewsSubtitle}>Verified owner experiences across all models</Text>
+            </View>
+
+            <View style={styles.ratingSummaryBadge}>
+              <View style={styles.ratingNumberRow}>
+                <Text style={styles.ratingScoreNumber}>4.9</Text>
+                <View style={styles.miniStarsWrap}>
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Ionicons key={s} name="star" size={10} color="#F59E0B" />
+                  ))}
+                </View>
+              </View>
+              <Text style={styles.ratingCountText}>128+ verified ratings</Text>
+            </View>
+          </View>
+
+          {/* Left to Right Horizontal Scroll */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.reviewsScrollWrap}
+          >
+            {ALL_REVIEWS.map((rev) => (
+              <View key={rev.id} style={styles.reviewCard}>
+                {/* User Row */}
+                <View style={styles.revUserRow}>
+                  <View style={styles.revAvatarCircle}>
+                    <Text style={styles.revAvatarInitials}>{rev.avatar}</Text>
+                  </View>
+                  <View style={styles.revUserMeta}>
+                    <Text style={styles.revAuthorName}>{rev.author}</Text>
+                    <View style={styles.revVerifiedPill}>
+                      <Ionicons name="checkmark-circle" size={11} color="#10B981" style={{ marginRight: 3 }} />
+                      <Text style={styles.revRoleText}>{rev.role}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.revDate}>{rev.date}</Text>
+                </View>
+
+                {/* Car Badge */}
+                <View style={styles.revCarPill}>
+                  <Ionicons name="car-sport" size={12} color="#2563EB" style={{ marginRight: 5 }} />
+                  <Text style={styles.revCarName}>{rev.carYear} {rev.carMake} {rev.carModel}</Text>
+                </View>
+
+                {/* Star Rating with Gold Stars */}
+                <View style={styles.starsRow}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Ionicons
+                      key={star}
+                      name="star"
+                      size={15}
+                      color={star <= rev.rating ? "#F59E0B" : "#CBD5E1"}
+                      style={{ marginRight: 2 }}
+                    />
+                  ))}
+                  <Text style={styles.starsScoreVal}>{rev.rating}.0</Text>
+                </View>
+
+                {/* Headline & Review Content */}
+                <Text style={styles.revHeadline}>{rev.title}</Text>
+                <Text style={styles.revCommentBody} numberOfLines={4}>
+                  "{rev.comment}"
+                </Text>
+
+                {/* Card Footer: Location & Helpful Tag */}
+                <View style={styles.revCardFooter}>
+                  <View style={styles.revLocationRow}>
+                    <Ionicons name="location-outline" size={12} color="#64748B" style={{ marginRight: 3 }} />
+                    <Text style={styles.revLocationText}>{rev.location}</Text>
+                  </View>
+                  <View style={styles.revHelpfulWrap}>
+                    <Ionicons name="thumbs-up-outline" size={11} color="#64748B" style={{ marginRight: 4 }} />
+                    <Text style={styles.revHelpfulText}>{rev.helpfulCount} helpful</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Bottom space */}
         <View style={{ height: 160 + (insets?.bottom || 0) }} />
@@ -525,5 +616,213 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 14,
+  },
+  reviewsCardSection: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginTop: 14,
+    borderRadius: 20,
+    paddingVertical: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  reviewsHeaderRow: {
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    gap: 12,
+  },
+  reviewsTagBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  reviewsTagText: {
+    color: '#2563EB',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  reviewsTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: 0.2,
+  },
+  reviewsSubtitle: {
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  ratingSummaryBadge: {
+    backgroundColor: '#090D16',
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  ratingNumberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  ratingScoreNumber: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  miniStarsWrap: {
+    flexDirection: 'row',
+    gap: 1,
+  },
+  ratingCountText: {
+    color: '#94A3B8',
+    fontSize: 9,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  reviewsScrollWrap: {
+    paddingLeft: 18,
+    paddingRight: 8,
+    gap: 12,
+  },
+  reviewCard: {
+    width: 290,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginRight: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  revUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  revAvatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  revAvatarInitials: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  revUserMeta: {
+    flex: 1,
+  },
+  revAuthorName: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  revVerifiedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 1,
+  },
+  revRoleText: {
+    fontSize: 10,
+    color: '#059669',
+    fontWeight: '700',
+  },
+  revDate: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  revCarPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  revCarName: {
+    color: '#334155',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  starsScoreVal: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#D97706',
+    marginLeft: 6,
+  },
+  revHeadline: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 5,
+    lineHeight: 18,
+  },
+  revCommentBody: {
+    fontSize: 11.5,
+    color: '#475569',
+    lineHeight: 17,
+    marginBottom: 12,
+  },
+  revCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  revLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  revLocationText: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  revHelpfulWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  revHelpfulText: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: '600',
   },
 });

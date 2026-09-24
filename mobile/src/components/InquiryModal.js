@@ -9,7 +9,6 @@ export default function InquiryModal({ visible, vehicle, onClose, onSubmitInquir
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [contactMethod, setContactMethod] = useState('Phone');
-  const [visitDate, setVisitDate] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -30,20 +29,17 @@ export default function InquiryModal({ visible, vehicle, onClose, onSubmitInquir
       phone: phone.trim(),
       contactMethod,
       message: message.trim() || 'I am interested in this vehicle and would like to arrange a test drive.',
-      visitDate: visitDate.trim(),
-      visitTime: '',
       status: 'New',
       submittedAt: new Date().toISOString(),
     };
 
     try {
       await onSubmitInquiry(newInquiry);
-      showToast('VIP Inquiry submitted successfully! Our advisor will contact you.', 'success');
+      showToast('Inquiry submitted successfully! Our advisor will contact you.', 'success');
       // Reset Form
       setFullName('');
       setEmail('');
       setPhone('');
-      setVisitDate('');
       setMessage('');
       onClose();
     } catch (e) {
@@ -131,17 +127,6 @@ export default function InquiryModal({ visible, vehicle, onClose, onSubmitInquir
                   onChangeText={setEmail}
                 />
               </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Preferred Visit Date</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. Saturday afternoon / Oct 25"
-                placeholderTextColor="#94A3B8"
-                value={visitDate}
-                onChangeText={setVisitDate}
-              />
             </View>
 
             <View style={styles.inputGroup}>

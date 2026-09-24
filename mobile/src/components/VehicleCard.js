@@ -96,6 +96,17 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire, style }
           {vehicle.model}
         </Text>
 
+        {/* 5-Star Rating Row */}
+        <View style={styles.cardRatingRow}>
+          <View style={styles.cardStarsWrap}>
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Ionicons key={s} name="star" size={10} color="#F59E0B" />
+            ))}
+          </View>
+          <Text style={styles.cardRatingScore}>5.0</Text>
+          <Text style={styles.cardReviewCount}>(24)</Text>
+        </View>
+
         {/* Price */}
         <Text style={styles.priceText}>
           ${vehicle.price?.toLocaleString()}
@@ -257,6 +268,27 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 2,
+  },
+  cardRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 4,
+  },
+  cardStarsWrap: {
+    flexDirection: 'row',
+    gap: 1.5,
+    alignItems: 'center',
+  },
+  cardRatingScore: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#D97706',
+  },
+  cardReviewCount: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    fontWeight: '600',
   },
   priceText: {
     fontSize: 14.5,
