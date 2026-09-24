@@ -200,7 +200,7 @@ export default function DetailsScreen({ vehicle, onBack, onInquire }) {
         )}
 
         {/* Bottom space */}
-        <View style={{ height: 130 + (insets?.bottom || 0) }} />
+        <View style={{ height: 160 + (insets?.bottom || 0) }} />
       </ScrollView>
 
       {/* Fixed Sticky Action Bar */}
@@ -208,8 +208,9 @@ export default function DetailsScreen({ vehicle, onBack, onInquire }) {
         styles.stickyFooter,
         {
           paddingBottom: Platform.OS === 'web'
-            ? 'calc(14px + env(safe-area-inset-bottom, 0px))'
-            : Math.max((insets?.bottom || 0) + 12, 18),
+            ? 'calc(36px + env(safe-area-inset-bottom, 0px))'
+            : Math.max((insets?.bottom || 0) + 26, 38),
+          paddingTop: 16,
         }
       ]}>
         <TouchableOpacity style={styles.callDealerBtn} onPress={handleCall} activeOpacity={0.7}>
@@ -286,26 +287,30 @@ const styles = StyleSheet.create({
   },
   galleryContainer: {
     backgroundColor: '#090D16',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    overflow: 'hidden',
   },
   mainImage: {
     width: '100%',
-    height: 260,
+    height: 280,
   },
   thumbRow: {
     flexDirection: 'row',
     padding: 12,
-    gap: 8,
+    gap: 10,
+    backgroundColor: '#090D16',
   },
   thumbWrap: {
-    width: 64,
-    height: 48,
-    borderRadius: 8,
+    width: 68,
+    height: 50,
+    borderRadius: 10,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   thumbWrapActive: {
-    borderColor: '#2563EB',
+    borderColor: '#38BDF8',
   },
   thumbImage: {
     width: '100%',
@@ -478,7 +483,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 16,
+    paddingBottom: 38,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
     gap: 12,

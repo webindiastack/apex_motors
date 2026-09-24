@@ -295,8 +295,9 @@ function MainApp() {
           styles.tabBar,
           {
             paddingBottom: Platform.OS === 'web'
-              ? 'calc(16px + env(safe-area-inset-bottom, 0px))'
-              : Math.max(insets.bottom + 12, 20),
+              ? 'calc(28px + env(safe-area-inset-bottom, 0px))'
+              : Math.max(insets.bottom + 20, 32),
+            paddingTop: 12,
           }
         ]}>
           {tabs.map(tab => {
@@ -379,8 +380,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 8,
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingTop: 12,
+    paddingBottom: 32,
     ...(Platform.OS === 'web' ? {
       position: 'sticky',
       bottom: 0,

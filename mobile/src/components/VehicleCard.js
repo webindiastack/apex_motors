@@ -22,10 +22,19 @@ export default function VehicleCard({ vehicle, onViewDetails, onInquire, style }
     }
   };
 
+  const getOptimizedUrl = (url) => {
+    if (!url) return 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=600&q=75';
+    if (url.includes('unsplash.com')) {
+      return url.replace(/w=\d+/, 'w=600').replace(/q=\d+/, 'q=75');
+    }
+    return url;
+  };
+
   const badgeStyle = getBadgeStyle(vehicle.badge);
-  const imageUrl = vehicle.images && vehicle.images[0]
+  const rawImageUrl = vehicle.images && vehicle.images[0]
     ? vehicle.images[0]
-    : 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80';
+    : 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=600&q=75';
+  const imageUrl = getOptimizedUrl(rawImageUrl);
 
   return (
     <TouchableOpacity
@@ -152,7 +161,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   imageContainer: {
-    height: 125,
+    height: 142,
     width: '100%',
     position: 'relative',
     backgroundColor: '#090D16',
@@ -163,7 +172,7 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(9, 13, 22, 0.18)',
+    backgroundColor: 'rgba(9, 13, 22, 0.1)',
   },
   badge: {
     position: 'absolute',

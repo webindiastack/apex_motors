@@ -141,8 +141,8 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
           resizeMode="cover"
         />
 
-        {/* Ambient Dark Gradient Wash */}
-        <View style={styles.ambientTopWash} />
+        {/* Ambient Dark Gradient Wash for text readability */}
+        <View style={styles.ambientBottomWash} />
 
         {/* Original Content Overlay */}
         <View style={styles.heroOverlay}>
@@ -204,16 +204,6 @@ export default function HomeScreen({ vehicles, onNavigate, onViewDetails, onInqu
         <View style={styles.statItem}>
           <Text style={styles.statNumber}>150+</Text>
           <Text style={styles.statLabel}>Verified Cars</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>160-Pt</Text>
-          <Text style={styles.statLabel}>Certified Inspection</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>4</Text>
-          <Text style={styles.statLabel}>Flagship Showrooms</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
@@ -371,23 +361,19 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  ambientTopWash: {
+  ambientBottomWash: {
     position: 'absolute',
-    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
-    height: 100,
-    backgroundColor: 'rgba(9, 13, 22, 0.4)',
+    height: 280,
+    backgroundColor: 'rgba(9, 13, 22, 0.45)',
   },
   heroOverlay: {
-    backgroundColor: 'rgba(9, 13, 22, 0.84)',
+    backgroundColor: 'transparent',
     paddingHorizontal: 22,
-    paddingTop: 30,
+    paddingTop: 20,
     paddingBottom: 22,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.12)',
     zIndex: 10,
   },
   heroBadge: {
@@ -414,15 +400,24 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 0.3,
     lineHeight: 34,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   heroHighlight: {
     color: '#38BDF8',
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   heroSubtitle: {
-    color: '#CBD5E1',
+    color: '#F1F5F9',
     fontSize: 13,
     marginTop: 8,
     lineHeight: 19,
+    textShadowColor: 'rgba(0, 0, 0, 0.85)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 5,
   },
   heroActionRow: {
     flexDirection: 'row',
